@@ -14,4 +14,17 @@ https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html
 Windows安装教程：
 https://www.cnblogs.com/hualess/p/11540477.html
 
+下载win版，运行.bat
+安装Chrome的elasticsearch插件
+
+5.x,6.x,7.x增删改查语法有版本差异
+
+#RESTFUL API基本类型：
+   
+    索引（类似于一个数据库的库名）
+    类型（类似于一个数据库中的一张表名）
+    文档 (类似于一张表里的一条记录)
+
+基本格式 http://<ip>:<port>/<索引>/<类型>/<文档id>
+
 
