@@ -5,3 +5,12 @@ ide rename goland 下
 zendstdio功能学习
 
 elasticsearch 学习
+
+goroutine调度器原理，p的作用，抢占过程
+chan原理，从写入到读取的整个过程，内部发生了是么
+锁的原理，自旋、饥饿模式
+k8s cni网络插件原理，从外部访问某个pod，中间经过了什么
+从podA访问podB网络如何转发，访问一个service时，如何到的目的地pod
+k8s ipvs工作原理
+k8s scheduler调度器原理，如何自定义调度器，内部如何工作
+k8s 探针有哪几种，如何工作的
