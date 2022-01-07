@@ -14,3 +14,16 @@ k8s cni网络插件原理，从外部访问某个pod，中间经过了什么
 k8s ipvs工作原理
 k8s scheduler调度器原理，如何自定义调度器，内部如何工作
 k8s 探针有哪几种，如何工作的
+
+
+1、任何情况下禁止使用cgo, 这个也需要在编译中，把cgo指令禁用
+
+2、如果在特殊情况下使用goroutine，必须在每个goroutine中实现recover，没有特殊情况，不要使用go func(), 我们一般做业务，也很少用到， 任何位置的recover需要打入panic日志
+
+3、尽量避免使用没有条件的for,  比如 for { }， 如果里面流程处理出错，可能会导致大量goroutine空转cpu和goroutine泄露，历史上曾经出现过因为这个导致整个集群崩溃的P0故障，虽然现在不会导致崩溃了，但是尽量避免或谨慎使用
+
+4、消费者在任何情况下不要close(chan)
+
+5、谨慎使用类型断言，如使用，要加是否成功判断或使用switch case，不得使用 v := interface.(type)
+
+6、禁止使用unsafe.Pointer，反射时可以例外，除非所有人都能整明白unsafe.Pointer
