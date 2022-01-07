@@ -27,3 +27,12 @@ k8s 探针有哪几种，如何工作的
 5、谨慎使用类型断言，如使用，要加是否成功判断或使用switch case，不得使用 v := interface.(type)
 
 6、禁止使用unsafe.Pointer，反射时可以例外，除非所有人都能整明白unsafe.Pointer
+
+
+编程规范奔着追求代码简洁，并具有可读性的目标去制定，遵循标准库的规范及静态代码检查工具Golangci-lint规则制定。
+
+Golangci-lint
+
+git地址：https://github.com/golangci/golangci-lint
+
+官方文档:https://golangci-lint.run/usage/quick-start/
