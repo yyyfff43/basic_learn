@@ -36,3 +36,17 @@ Golangci-lint
 git地址：https://github.com/golangci/golangci-lint
 
 官方文档:https://golangci-lint.run/usage/quick-start/
+
+专业计算机术语翻译网站 http://www.deepl.com/zh/translator
+
+godoc命令可以查看项目中所有包的文档，包括go官方的，第三方引入的和自己写的,go get golang.org/x/tools/cmd/godoc 之后执行godoc -http://6060
+
+阅读《go专家变成》
+
+visualdesigner 流程图制作软件
+
+git stash暂时保存命令
+
+git cheeckout . 可以放弃啊之前没有add过的修改
+
+fastdfs 分布式文件系统
