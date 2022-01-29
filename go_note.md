@@ -111,3 +111,37 @@ fmt.Println(s1)
 
 反引号间换行将被作为字符串中的换行，但是所有的转义字符均无效，文本将会原样输出。
 
+### 字符类型
+
+Go 语言的字符有以下两种：
+
+1. `uint8`类型，或者叫 byte 型，代表了`ASCII码`的一个字符。
+2. `rune`类型，代表一个 `UTF-8字符`。当需要处理中文、日文或者其他复合字符时，则需要用到`rune`类型。`rune`类型实际是一个`int32`。
+
+如何修改字符串：
+
+要修改字符串，需要先将其转换成`[]rune`或`[]byte`，完成后再转换为`string`。无论哪种转换，都会重新分配内存，并复制字节数组。
+
+例：
+
+```go
+func changeString() {
+	s1 := "big"
+	// 强制类型转换
+	byteS1 := []byte(s1)
+	byteS1[0] = 'p'
+	fmt.Println(string(byteS1))
+
+	s2 := "白萝卜"
+	runeS2 := []rune(s2)
+	runeS2[0] = '红'
+	fmt.Println(string(runeS2))
+}
+```
+
+### 类型转换
+
+```bash
+T(表达式)
+```
+
