@@ -145,3 +145,85 @@ func changeString() {
 T(表达式)
 ```
 
+### goto 语句使用
+
+`goto`语句通过标签进行代码间的无条件跳转。`goto`语句可以在快速跳出循环、避免重复退出上有一定的帮助。Go语言中使用`goto`语句能简化一些代码的实现过程。 例如双层嵌套的for循环要退出时：
+
+```go
+func gotoDemo1() {
+	var breakFlag bool
+	for i := 0; i < 10; i++ {
+		for j := 0; j < 10; j++ {
+			if j == 2 {
+				// 设置退出标签
+				breakFlag = true
+				break
+			}
+			fmt.Printf("%v-%v\n", i, j)
+		}
+		// 外层for循环判断
+		if breakFlag {
+			break
+		}
+	}
+}
+```
+
+使用`goto`语句能简化代码：
+
+```go
+func gotoDemo2() {
+	for i := 0; i < 10; i++ {
+		for j := 0; j < 10; j++ {
+			if j == 2 {
+				// 设置退出标签
+				goto breakTag
+			}
+			fmt.Printf("%v-%v\n", i, j)
+		}
+	}
+	return
+	// 标签
+breakTag:
+	fmt.Println("结束for循环")
+}
+```
+
+### break语句使用标签指定退出的代码块
+
+```go
+func breakDemo1() {
+BREAKDEMO1:
+	for i := 0; i < 10; i++ {
+		for j := 0; j < 10; j++ {
+			if j == 2 {
+				break BREAKDEMO1
+			}
+			fmt.Printf("%v-%v\n", i, j)
+		}
+	}
+	fmt.Println("...")
+}
+```
+
+## continue
+
+`continue`语句可以结束当前循环，开始下一次的循环迭代过程，仅限在`for`循环内使用。
+
+在 `continue`语句后添加标签时，表示开始标签对应的循环。例如：
+
+```go
+func continueDemo() {
+forloop1:
+	for i := 0; i < 5; i++ {
+		// forloop2:
+		for j := 0; j < 5; j++ {
+			if i == 2 && j == 2 {
+				continue forloop1
+			}
+			fmt.Printf("%v-%v\n", i, j)
+		}
+	}
+}
+```
+
