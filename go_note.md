@@ -465,3 +465,118 @@ func main() {
 	fmt.Println(a) //[30 31 33 34 35 36 37]
 }
 ```
+
+### map
+
+按照指定顺序遍历map
+
+```go
+	rand.Seed(time.Now().UnixNano()) //初始化随机数种子
+
+	var scoreMap = make(map[string]int, 200)
+
+	for i := 0; i < 100; i++ {
+		key := fmt.Sprintf("stu%02d", i) //生成stu开头的字符串
+		value := rand.Intn(100)          //生成0~99的随机整数
+		scoreMap[key] = value
+	}
+	//取出map中的所有key存入切片keys
+	var keys = make([]string, 0, 200)
+	for key := range scoreMap {
+		keys = append(keys, key)
+	}
+	//对切片进行排序
+	sort.Strings(keys)
+	//按照排序后的key遍历map
+	for _, key := range keys {
+		fmt.Println(key, scoreMap[key])
+	}
+```
+
+map类型的变量默认初始值为nil，需要使用make()函数来分配内存。语法为：
+
+```go
+make(map[KeyType]ValueType, [cap])
+```
+
+其中cap表示map的容量，该参数虽然不是必须的，但是我们应该在初始化map的时候就为其指定一个合适的容量。
+
+### 函数
+
+固定参数搭配可变参数使用时，可变参数要放在固定参数的后面，示例代码如下：
+
+```go
+func intSum3(x int, y ...int) int {
+	fmt.Println(x, y)
+	sum := x
+	for _, v := range y {
+		sum = sum + v
+	}
+	return sum
+}
+```
+
+调用上述函数：
+
+```go
+ret5 := intSum3(100)
+ret6 := intSum3(100, 10)
+ret7 := intSum3(100, 10, 20)
+ret8 := intSum3(100, 10, 20, 30)
+fmt.Println(ret5, ret6, ret7, ret8) //100 110 130 160
+```
+
+本质上，函数的可变参数是通过切片来实现的。
+
+函数定义时可以给返回值命名，并在函数体中直接使用这些变量，最后通过`return`关键字返回。
+
+例如：
+
+```go
+func calc(x, y int) (sum, sub int) {
+	sum = x + y
+	sub = x - y
+	return
+}
+```
+
+如果局部变量和全局变量重名，优先访问局部变量。函数外不能使用：=声明变量
+
+我们可以使用`type`关键字来定义一个函数类型，具体格式如下：
+
+```go
+type calculation func(int, int) int
+```
+
+上面语句定义了一个`calculation`类型，它是一种函数类型，这种函数接收两个int类型的参数并且返回一个int类型的返回值。
+
+简单来说，凡是满足这个条件的函数都是calculation类型的函数，例如下面的add和sub是calculation类型。
+
+```go
+func add(x, y int) int {
+	return x + y
+}
+
+func sub(x, y int) int {
+	return x - y
+}
+```
+
+add和sub都能赋值给calculation类型的变量。
+
+```go
+var c calculation
+c = add
+```
+
+```go
+	var c calculation               // 声明一个calculation类型的变量c
+	c = add                         // 把add赋值给c
+	fmt.Printf("type of c:%T\n", c) // type of c:main.calculation
+	fmt.Println(c(1, 2))            // 像调用add一样调用c
+
+	f := add                        // 将函数add赋值给变量f1
+	fmt.Printf("type of f:%T\n", f) // type of f:func(int, int) int
+	fmt.Println(f(10, 20))          // 像调用add一样调用f
+```
+
