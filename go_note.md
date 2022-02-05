@@ -580,3 +580,103 @@ c = add
 	fmt.Println(f(10, 20))          // 像调用add一样调用f
 ```
 
+匿名函数因为没有函数名，所以没办法像普通函数那样调用，所以匿名函数需要保存到某个变量或者作为立即执行函数:
+
+匿名函数多用于实现回调函数和闭包
+
+```go
+	// 将匿名函数保存到变量
+	add := func(x, y int) {
+		fmt.Println(x + y)
+	}
+	add(10, 20) // 通过变量调用匿名函数
+
+	//自执行函数：匿名函数定义完加()直接执行
+	func(x, y int) {
+		fmt.Println(x + y)
+	}(10, 20)
+```
+
+闭包其实并不复杂，只要牢记`闭包=函数+引用环境`:
+
+```go
+func adder2(x int) func(int) int {
+	return func(y int) int {
+		x += y
+		return x
+	}
+}
+func main() {
+	var f = adder2(10)
+	fmt.Println(f(10)) //20
+	fmt.Println(f(20)) //40
+	fmt.Println(f(30)) //70
+
+	f1 := adder2(20)
+	fmt.Println(f1(40)) //60
+	fmt.Println(f1(50)) //110
+}
+```
+
+变量`f`是一个函数并且它引用了其外部作用域中的`x`变量，此时`f`就是一个闭包。 在`f`的生命周期内，变量`x`也一直有效。 
+
+Go语言中的`defer`语句会将其后面跟随的语句进行延迟处理。在`defer`归属的函数即将返回时，将延迟处理的语句按`defer`定义的逆序进行执行，也就是说，先被`defer`的语句最后被执行，最后被`defer`的语句，最先被执行。
+
+```go
+func main() {
+	fmt.Println("start")
+	defer fmt.Println(1)
+	defer fmt.Println(2)
+	defer fmt.Println(3)
+	fmt.Println("end")
+}
+```
+
+输出结果：
+
+```go
+start
+end
+3
+2
+1
+```
+
+在Go语言的函数中`return`语句在底层并不是原子操作，它分为给返回值赋值和RET指令两步。而`defer`语句执行的时机就在返回值赋值操作后，RET指令执行前
+
+![](C:\Users\Administrator\Pictures\defer.png)
+
+panic特点：
+
+1. `recover()`必须搭配`defer`使用。
+2. `defer`一定要在可能引发`panic`的语句之前定义。
+
+程序运行期间`funcB`中引发了`panic`导致程序崩溃，异常退出了。这个时候我们就可以通过`recover`将程序恢复回来，继续往后执行。
+
+```go
+func funcA() {
+	fmt.Println("func A")
+}
+
+func funcB() {
+	defer func() {
+		err := recover()
+		//如果程序出出现了panic错误,可以通过recover恢复过来
+		if err != nil {
+			fmt.Println("recover in B")
+		}
+	}()
+	panic("panic in B")
+}
+
+func funcC() {
+	fmt.Println("func C")
+}
+func main() {
+	funcA()
+	funcB()
+	funcC()
+}
+```
+
+程序可顺利运行下去而不会中断
