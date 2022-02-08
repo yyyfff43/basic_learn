@@ -644,7 +644,7 @@ end
 
 在Go语言的函数中`return`语句在底层并不是原子操作，它分为给返回值赋值和RET指令两步。而`defer`语句执行的时机就在返回值赋值操作后，RET指令执行前
 
-![](C:\Users\Administrator\Pictures\defer.png)
+![](https://www.liwenzhou.com/images/Go/func/defer.png)
 
 panic特点：
 
@@ -680,3 +680,86 @@ func main() {
 ```
 
 程序可顺利运行下去而不会中断
+
+### 指针
+
+取地址操作符`&`和取值操作符`*`是一对互补操作符，`&`取出地址，`*`根据地址取出地址指向的值。
+
+变量、指针地址、指针变量、取地址、取值的相互关系和特性如下：
+
+- 对变量进行取地址（&）操作，可以获得这个变量的指针变量。
+- 指针变量的值是指针地址。
+- 对指针变量进行取值（*）操作，可以获得指针变量指向的原变量的值。
+
+```go
+	a := 10
+	b := &a
+	fmt.Printf("a:%d ptr:%p\n", a, &a) // a:10 ptr:0xc00001a078
+	fmt.Printf("b:%p type:%T\n", b, b) // b:0xc00001a078 type:*int
+	fmt.Println(&b) 
+```
+
+`b := &a`的图示：
+
+![](https://www.liwenzhou.com/images/Go/pointer/ptr.png)
+
+在对普通变量使用&操作符取地址后会获得这个变量的指针，然后可以对指针使用*操作，也就是指针取值，
+
+```go
+func main() {
+	//指针取值
+	a := 10
+	b := &a // 取变量a的地址，将指针保存到b中
+	fmt.Printf("type of b:%T\n", b)
+	c := *b // 指针取值（根据指针去内存取值）
+	fmt.Printf("type of c:%T\n", c)
+	fmt.Printf("value of c:%v\n", c)
+}
+
+结果：
+type of b:*int
+type of c:int
+value of c:10
+```
+
+### new与make的区别
+
+1. 二者都是用来做内存分配的。
+
+2. make只用于slice、map以及channel的初始化，返回的还是这三个引用类型本身；尽量在声明时分配容量
+
+3. 而new用于类型的内存分配，并且内存对应的值为类型零值，返回的是指向类型的指针。
+
+   
+
+例 new：
+
+```go
+	var a *int
+	a = new(int)
+	*a = 10
+	fmt.Println(*a)
+```
+
+make：
+
+```go
+var b map[string]int
+	b = make(map[string]int, 10)
+	b["沙河娜扎"] = 100
+	fmt.Println(b)
+```
+
+否则会报panic，例：
+
+```go
+	var a *int
+	*a = 100
+	fmt.Println(*a)
+
+	var b map[string]int
+	b["沙河娜扎"] = 100
+	fmt.Println(b)
+```
+
+因为没指定内存空间，需要new和make来声明
