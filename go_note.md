@@ -763,3 +763,33 @@ var b map[string]int
 ```
 
 因为没指定内存空间，需要new和make来声明
+
+### 类型别名和自定义类型
+
+类型别名与类型定义表面上看只有一个等号的差异:
+
+```go
+//类型定义
+type NewInt int
+
+//类型别名
+type MyInt = int
+
+func main() {
+	var a NewInt
+	var b MyInt
+	
+	fmt.Printf("type of a:%T\n", a) //type of a:main.NewInt
+	fmt.Printf("type of b:%T\n", b) //type of b:int
+}
+```
+
+结果显示a的类型是`main.NewInt`，表示main包下定义的`NewInt`类型。b的类型是`int`。`MyInt`类型只会在代码中存在，编译完成时并不会有`MyInt`类型。
+
+官方类型别名：
+
+```go
+type byte = uint8
+type rune = int32
+```
+
