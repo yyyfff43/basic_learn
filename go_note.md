@@ -709,9 +709,9 @@ func main() {
 func main() {
 	//指针取值
 	a := 10
-	b := &a // 取变量a的地址，将指针保存到b中
+	b := &a // 取变量a的地址，将指针保存到b中，b的值是指针地址 如：0xc0000ac058
 	fmt.Printf("type of b:%T\n", b)
-	c := *b // 指针取值（根据指针去内存取值）
+	c := *b // 指针取值（根据指针去内存取值）如：根据0xc0000ac058地址取出值为10
 	fmt.Printf("type of c:%T\n", c)
 	fmt.Printf("value of c:%v\n", c)
 }
@@ -793,3 +793,66 @@ type byte = uint8
 type rune = int32
 ```
 
+### 结构体
+
+一般声明：
+
+```go
+type person struct {
+	name string
+	city string
+	age  int8
+}
+
+func main() {
+	var p1 person
+	p1.name = "张三"
+	p1.city = "北京"
+	p1.age = 18
+	fmt.Printf("p1=%v\n", p1)  //p1={张三 北京 18}
+	fmt.Printf("p1=%#v\n", p1) //p1=main.person{name:"张三", city:"北京", age:18}
+}
+```
+
+一些临时数据结构等场景下还可以使用匿名结构体：
+
+```go
+func main() {//在方法内部使用完后即回收
+    var user struct{Name string; Age int}
+    user.Name = "小王子"
+    user.Age = 18
+    fmt.Printf("%#v\n", user)
+}
+```
+
+使用`new`关键字对结构体进行实例化，得到的是结构体的地址(指针)
+
+```go
+var p2 = new(person)
+fmt.Printf("%T\n", p2)     //*main.person
+fmt.Printf("p2=%#v\n", p2) //p2=&main.person{name:"", city:"", age:0} 从打印的结果中我们可以看出p2是一个结构体指针。
+```
+
+支持对结构体指针直接使用`.`来访问结构体的成员
+
+```go
+var p2 = new(person)
+p2.name = "小王子"
+p2.age = 28
+p2.city = "上海"
+fmt.Printf("p2=%#v\n", p2) //p2=&main.person{name:"小王子", city:"上海", age:28}
+```
+
+使用`&`对结构体进行取地址操作相当于对该结构体类型进行了一次`new`实例化操作。
+
+```go
+p3 := &person{}
+fmt.Printf("%T\n", p3)     //*main.person
+fmt.Printf("p3=%#v\n", p3) //p3=&main.person{name:"", city:"", age:0}
+p3.name = "七米"
+p3.age = 30
+p3.city = "成都"
+fmt.Printf("p3=%#v\n", p3) //p3=&main.person{name:"七米", city:"成都", age:30}
+```
+
+`p3.name = "七米"`其实在底层是`(*p3).name = "七米"`，这是Go语言帮我们实现的语法糖。
