@@ -856,3 +856,337 @@ fmt.Printf("p3=%#v\n", p3) //p3=&main.person{name:"七米", city:"成都", age:3
 ```
 
 `p3.name = "七米"`其实在底层是`(*p3).name = "七米"`，这是Go语言帮我们实现的语法糖。
+
+使用键值对对结构体进行初始化时，键对应结构体的字段，值对应该字段的初始值。
+
+```go
+p5 := person{
+	name: "小王子",
+	city: "北京",
+	age:  18,
+}
+fmt.Printf("p5=%#v\n", p5) //p5=main.person{name:"小王子", city:"北京", age:18}
+```
+
+也可以对结构体指针进行键值对初始化
+
+```go
+p6 := &person{
+	name: "小王子",
+	city: "北京",
+	age:  18,
+}
+fmt.Printf("p6=%#v\n", p6) //p6=&main.person{name:"小王子", city:"北京", age:18}
+```
+
+当某些字段没有初始值的时候，该字段可以不写。此时，没有指定初始值的字段的值就是该字段类型的零值。
+
+结构体占用一块连续的内存:
+
+```go
+type test struct {
+	a int8
+	b int8
+	c int8
+	d int8
+}
+n := test{
+	1, 2, 3, 4,
+}
+fmt.Printf("n.a %p\n", &n.a) //n.a 0xc0000a0060
+fmt.Printf("n.b %p\n", &n.b) //n.b 0xc0000a0061
+fmt.Printf("n.c %p\n", &n.c) //n.c 0xc0000a0062
+fmt.Printf("n.d %p\n", &n.d) //n.d 0xc0000a0063
+```
+
+内存地址是连续的，空结构体是不占用空间
+
+构造函数：
+
+Go语言的结构体没有构造函数，我们可以自己实现。 例如，下方的代码就实现了一个`person`的构造函数。 因为`struct`是值类型，如果结构体比较复杂的话，值拷贝性能开销会比较大，所以该构造函数返回的是结构体指针类型。
+
+```go
+func newPerson(name, city string, age int8) *person {
+	return &person{
+		name: name,
+		city: city,
+		age:  age,
+	}
+}
+```
+
+```go
+p9 := newPerson("张三", "沙河", 90)
+fmt.Printf("%#v\n", p9) //&main.person{name:"张三", city:"沙河", age:90}
+```
+
+- 接收者变量：接收者中的参数变量名在命名时，官方建议使用接收者类型名称首字母的小写，而不是`self`、`this`之类的命名。例如，`Person`类型的接收者变量应该命名为 `p`，`Connector`类型的接收者变量应该命名为`c`等。
+
+- 接收者类型：接收者类型和参数类似，可以是指针类型和非指针类型。
+
+- 方法名、参数列表、返回参数：具体格式与函数定义相同。
+
+- 指针类型的接收者由一个结构体的指针组成，由于指针的特性，调用方法时修改接收者指针的任意成员变量，在方法结束后，修改都是有效的。这种方式就十分接近于其他语言中面向对象中的`this`或者`self`。 例如我们为`Person`添加一个`SetAge`方法，来修改实例变量的年龄。
+
+  ```go
+  // 使用指针接收者
+  func (p *Person) SetAge(newAge int8) {
+  	p.age = newAge
+  }
+  
+  // 使用值接收者（结构体是另一份拷贝）
+  func (p *Person) SetAge(newAge int8) {
+  	p.age = newAge
+  }
+  
+  ```
+
+什么时候使用指针接收者
+
+1. 需要修改接收者中的值
+
+2. 接收者是拷贝代价比较大的大对象
+
+3. 保证一致性，如果有某个方法使用了指针接收者，那么其他的方法也应该使用指针接收者。
+
+   
+
+在Go语言中，接收者的类型可以是任何类型，不仅仅是结构体，任何类型都可以拥有方法。 举个例子，我们基于内置的`int`类型使用type关键字可以定义新的自定义类型，然后为我们的自定义类型添加方法。
+
+```go
+//MyInt 将int定义为自定义MyInt类型
+type MyInt int
+
+//SayHello 为MyInt添加一个SayHello的方法
+func (m MyInt) SayHello() {
+	fmt.Println("Hello, 我是一个int。")
+}
+func main() {
+	var m1 MyInt
+	m1.SayHello() //Hello, 我是一个int。
+	m1 = 100
+	fmt.Printf("%#v  %T\n", m1, m1) //100  main.MyInt
+}
+```
+
+不能给别的包的类型定义方法
+
+结构体的匿名字段，这里匿名字段的说法并不代表没有字段名，而是默认会采用类型名作为字段名，结构体要求字段名称必须唯一，因此一个结构体中同种类型的匿名字段只能有一个。实例化对象只能有一个string，一个int，例：
+
+```go
+//Person 结构体Person类型
+type Person struct {
+	string
+	int
+}
+
+func main() {
+	p1 := Person{
+		"小王子",
+		18,
+	}
+	fmt.Printf("%#v\n", p1)        //main.Person{string:"北京", int:18}
+	fmt.Println(p1.string, p1.int) //北京 18
+}
+```
+
+嵌套结构体，一个结构体中可以嵌套包含另一个结构体或结构体指针:
+
+```go
+//Address 地址结构体
+type Address struct {
+	Province string
+	City     string
+}
+
+//User 用户结构体
+type User struct {
+	Name    string
+	Gender  string
+	Address Address
+}
+
+func main() {
+	user1 := User{
+		Name:   "小王子",
+		Gender: "男",
+		Address: Address{
+			Province: "山东",
+			City:     "威海",
+		},
+	}
+	fmt.Printf("user1=%#v\n", user1)//user1=main.User{Name:"小王子", Gender:"男", Address:main.Address{Province:"山东", City:"威海"}}
+}
+```
+
+上面user结构体中嵌套的`Address`结构体也可以采用匿名字段的方式
+
+```go
+//Address 地址结构体
+type Address struct {
+	Province string
+	City     string
+}
+
+//User 用户结构体
+type User struct {
+	Name    string
+	Gender  string
+	Address //匿名字段
+}
+
+func main() {
+	var user2 User
+	user2.Name = "小王子"
+	user2.Gender = "男"
+	user2.Address.Province = "山东"    // 匿名字段默认使用类型名作为字段名
+	user2.City = "威海"                // 匿名字段可以省略
+	fmt.Printf("user2=%#v\n", user2) //user2=main.User{Name:"小王子", Gender:"男", Address:main.Address{Province:"山东", City:"威海"}}
+}
+```
+
+Go语言中没有实质的继承，需要自己来实现:
+
+```go
+//Animal 动物
+type Animal struct {
+	name string
+}
+
+func (a *Animal) move() {
+	fmt.Printf("%s会动！\n", a.name)
+}
+
+//Dog 狗
+type Dog struct {
+	Feet    int8
+	*Animal //通过嵌套匿名结构体实现继承
+}
+
+func (d *Dog) wang() {
+	fmt.Printf("%s会汪汪汪~\n", d.name)
+}
+
+func main() {
+	d1 := &Dog{
+		Feet: 4,
+		Animal: &Animal{ //注意嵌套的是结构体指针，可以通过指针变量直接调用上层方法
+			name: "乐乐",
+		},
+	}
+	d1.wang() //乐乐会汪汪汪~
+	d1.move() //乐乐会动！
+}
+```
+
+结构体中字段大写开头表示可公开访问，小写表示私有（仅在定义当前结构体的包中可访问）。
+
+结构体于json序列化互换：
+
+```go
+//Student 学生
+type Student struct {
+	ID     int
+	Gender string
+	Name   string
+}
+
+//Class 班级
+type Class struct {
+	Title    string
+	Students []*Student
+}
+
+func main() {
+	c := &Class{
+		Title:    "101",
+		Students: make([]*Student, 0, 200),
+	}
+	for i := 0; i < 10; i++ {
+		stu := &Student{
+			Name:   fmt.Sprintf("stu%02d", i),
+			Gender: "男",
+			ID:     i,
+		}
+		c.Students = append(c.Students, stu)
+	}
+	//JSON序列化：结构体-->JSON格式的字符串
+	data, err := json.Marshal(c)
+	if err != nil {
+		fmt.Println("json marshal failed")
+		return
+	}
+	fmt.Printf("json:%s\n", data)
+	//JSON反序列化：JSON格式的字符串-->结构体
+	str := `{"Title":"101","Students":[{"ID":0,"Gender":"男","Name":"stu00"},{"ID":1,"Gender":"男","Name":"stu01"},{"ID":2,"Gender":"男","Name":"stu02"},{"ID":3,"Gender":"男","Name":"stu03"},{"ID":4,"Gender":"男","Name":"stu04"},{"ID":5,"Gender":"男","Name":"stu05"},{"ID":6,"Gender":"男","Name":"stu06"},{"ID":7,"Gender":"男","Name":"stu07"},{"ID":8,"Gender":"男","Name":"stu08"},{"ID":9,"Gender":"男","Name":"stu09"}]}`
+	c1 := &Class{}
+	err = json.Unmarshal([]byte(str), c1)
+	if err != nil {
+		fmt.Println("json unmarshal failed!")
+		return
+	}
+	fmt.Printf("%#v\n", c1)
+}
+```
+
+注意json转结构体时err = json.Unmarshal([]byte(str), c1)众str需要先转换成byte切片
+
+结构体标签（Tag）
+
+为结构体编写`Tag`时，必须严格遵守键值对的规则。结构体标签的解析代码的容错能力很差，一旦格式写错，编译和运行时都不会提示任何错误，通过反射也无法正确取值。例如不要在key和value之间添加空格。
+
+```go
+//Student 学生
+type Student struct {
+	ID     int    `json:"id"` //通过指定tag实现json序列化该字段时的key
+	Gender string //json序列化是默认使用字段名作为key
+	name   string //私有不能被json包访问
+}
+
+func main() {
+	s1 := Student{
+		ID:     1,
+		Gender: "男",
+		name:   "沙河娜扎",
+	}
+	data, err := json.Marshal(s1)
+	if err != nil {
+		fmt.Println("json marshal failed!")
+		return
+	}
+	fmt.Printf("json str:%s\n", data) //json str:{"id":1,"Gender":"男"}
+}
+```
+
+因为slice和map这两种数据类型都包含了指向底层数据的指针，因此我们在需要复制它们时要特别注意。我们来看下面的例子：
+
+```go
+type Person struct {
+	name   string
+	age    int8
+	dreams []string
+}
+
+func (p *Person) SetDreams(dreams []string) {
+	p.dreams = dreams//这里是值复制，外部如果调用切片会改变其中的值，因为切片数据类型包含了指向底层数据的指针
+}
+
+func main() {
+	p1 := Person{name: "小王子", age: 18}
+	data := []string{"吃饭", "睡觉", "打豆豆"}
+	p1.SetDreams(data)
+
+	//如果知识单纯的把data靠=赋值给p1.dreams，则睡觉会变成不睡觉，如果是用copy方法则实现了值复制，不会改变p1.dreams
+	data[1] = "不睡觉"
+	fmt.Println(p1.dreams)  // ?
+}
+```
+
+正确的做法是在方法中使用传入的slice的拷贝进行结构体赋值。
+
+```go
+func (p *Person) SetDreams(dreams []string) {
+	p.dreams = make([]string, len(dreams))
+	copy(p.dreams, dreams)//拷贝一份切片，防止这个切片在外部改变了，影响结构体的值也跟着改变,同样道理在map时也要注意
+}
+```
