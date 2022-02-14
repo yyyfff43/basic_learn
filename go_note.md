@@ -1176,7 +1176,7 @@ func main() {
 	data := []string{"吃饭", "睡觉", "打豆豆"}
 	p1.SetDreams(data)
 
-	//如果知识单纯的把data靠=赋值给p1.dreams，则睡觉会变成不睡觉，如果是用copy方法则实现了值复制，不会改变p1.dreams
+	//如果只是单纯的把data靠=赋值给p1.dreams，则睡觉会变成不睡觉，如果是用copy方法则实现了值复制，不会改变p1.dreams
 	data[1] = "不睡觉"
 	fmt.Println(p1.dreams)  // ?
 }
@@ -1190,3 +1190,205 @@ func (p *Person) SetDreams(dreams []string) {
 	copy(p.dreams, dreams)//拷贝一份切片，防止这个切片在外部改变了，影响结构体的值也跟着改变,同样道理在map时也要注意
 }
 ```
+
+
+
+### go语言的包
+
+```go
+首字母大写，对外可见(可在其它包中使用)
+```
+
+在每一个Go源文件中，都可以定义任意个如下格式的特殊函数init来初始化包
+
+```go
+func init(){
+  // ...
+}
+```
+
+当程序启动的时候，init函数会按照它们声明的顺序自动执行，一个包的初始化过程是按照代码中引入的顺序来进行的，所有在该包中声明的`init`函数都将被串行调用并且仅调用执行一次。每一个包初始化的时候都是先执行依赖的包中声明的`init`函数再执行当前包中声明的`init`函数。确保在程序的`main`函数开始执行时所有的依赖包都已初始化完成。
+
+
+
+![](https://www.liwenzhou.com/images/Go/package/package01.png)
+
+例：
+
+```go
+package main
+
+import "fmt"
+
+var x int8 = 10
+
+const pi = 3.14
+
+func init() {
+  fmt.Println("x:", x)
+	fmt.Println("pi:", pi)
+	sayHi()
+}
+
+func sayHi() {
+	fmt.Println("Hello World!")
+}
+
+func main() {
+	fmt.Println("你好，世界！")
+}
+
+x: 10
+pi: 3.14
+Hello World!
+你好，世界！
+```
+
+GOPROXY 设置第三方镜像用来顺利的拉取海外网络的包，GOPRIVATE 用来告诉 go 命令哪些仓库属于私有仓库，不必通过代理服务器拉取和校验。
+
+除go mod tidy 之外的手工下载包：
+
+```bash
+go get -u github.com/q1mi/hello  -u表示强制更新现有依赖
+```
+
+带版本号更新：
+
+```bash
+go get -u github.com/q1mi/hello@v0.1.0
+go get -u github.com/q1mi/hello@latest  @latest表示下载时下载最新的版本
+```
+
+
+
+直接指定commit hash：
+
+```bash
+ go get github.com/q1mi/hello@2ccfadd hash前7位即可
+```
+
+如在.go文件中有如下字样引入：
+
+```go
+require github.com/q1mi/hello v0.1.0 // indirect
+```
+
+如果你想要导入本地的一个包，并且这个包也没有发布到到其他任何代码仓库，这时候你可以在`go.mod`文件中使用`replace`语句将依赖临时替换为本地的代码包。例如在我的电脑上有另外一个名为`liwenzhou.com/overtime`的项目，它位于`holiday`项目同级目录下
+
+可以在`holidy/go.mod`文件中正常引入`liwenzhou.com/overtime`包，然后像下面的示例那样使用`replace`语句将这个依赖替换为使用相对路径表示的本地包
+
+```go
+module holiday
+
+go 1.16
+
+require github.com/q1mi/hello v0.1.1
+require liwenzhou.com/overtime v0.0.0
+
+replace liwenzhou.com/overtime  => ../overtime
+```
+
+这样，我们就可以在`holiday/main.go`下正常引入并使用`overtime`包了:
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"holiday/summer" // 导入当前项目下的包
+
+	"liwenzhou.com/overtime" // 通过replace导入的本地包
+
+	"github.com/q1mi/hello" // 导入github上第三方包
+)
+
+func main() {
+	fmt.Println("现在是假期时间...")
+	hello.SayHi()
+
+	summer.Diving()
+
+	overtime.Do()
+}
+```
+
+我们也经常使用`replace`将项目依赖中的某个包，替换为其他版本的代码包或我们自己修改后的代码包
+
+go.mod 中
+
+```bash
+require module/path v1.2.3
+```
+
+- require：声明依赖的关键字
+- module/path：依赖包的引入路径
+- v1.2.3：依赖包的版本号。支持以下几种格式：
+  - latest：最新版本
+  - v1.0.0：详细版本号
+  - commit hash：指定某次commit hash
+
+引入某些没有发布过`tag`版本标识的依赖包时，`go.mode`中记录的依赖版本信息就会出现类似`v0.0.0-20210218074646-139b0bcd549d`的格式，由版本号、commit时间和commit的hash值组成
+
+![](https://www.liwenzhou.com/images/Go/package/module_version_info.png)
+
+一个设计完善的包应该包含开源许可证及文档等内容，并且我们还应该尽心维护并适时发布适当的版本。github 上发布版本号使用git tag为代码包打上标签即可。
+
+```bash
+hello $ git tag -a v0.1.0 -m "release version v0.1.0"
+hello $ git push origin v0.1.0
+```
+
+版本表示：
+
+![](https://www.liwenzhou.com/images/Go/package/version_number.png)
+
+- 主版本号：发布了不兼容的版本迭代时递增（breaking changes）。
+- 次版本号：发布了功能性更新时递增。
+- 修订号：发布了bug修复类更新时递增。
+
+由于某次改动巨大（修改了函数之前的调用规则），对之前使用该包作为依赖的用户影响巨大。因此我们需要发布一个主版本号递增的`v2`版本。在这种情况下，我们通常会修改当前包的引入路径，像下面的示例一样为引入路径添加版本后缀。
+
+```go
+// hello/go.mod
+
+module github.com/q1mi/hello/v2
+
+go 1.16
+```
+
+把修改后的代码提交，并再次打好tag:
+
+```bash
+hello $ git tag -a v2.0.0 -m "release version v2.0.0"
+hello $ git push origin v2.0.0
+```
+
+这样在不影响使用旧版本的用户的前提下，我们新的版本也发布出去了。想要使用`v2`版本的代码包的用户只需按修改后的引入路径下载即可。
+
+```bash
+go get github.com/q1mi/hello/v2@v2.0.0
+```
+
+在代码中使用的过程与之前类似，只是需要注意引入路径要添加 v2 版本后缀。
+
+```go
+import (
+	"fmt"
+
+	"github.com/q1mi/hello/v2" // 引入v2版本
+)
+```
+
+使用`retract`声明废弃的版本:
+
+```go
+module github.com/q1mi/hello
+
+go 1.16
+
+
+retract v0.1.2
+```
+
+用户使用go get下载`v0.1.2`版本时就会收到提示，催促其升级到其他版本。
