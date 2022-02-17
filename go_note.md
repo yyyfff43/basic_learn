@@ -1392,3 +1392,293 @@ retract v0.1.2
 ```
 
 用户使用go get下载`v0.1.2`版本时就会收到提示，催促其升级到其他版本。
+
+
+
+### 接口
+
+
+
+- 接口类型名：Go语言的接口在命名时，一般会在单词后面添加`er`，如有写操作的接口叫`Writer`，有关闭操作的接口叫`closer`等。接口名最好要能突出该接口的类型含义。
+
+- 方法名：当方法名首字母是大写且这个接口类型名首字母也是大写时，这个方法可以被接口所在的包（package）之外的代码访问。
+
+- 参数列表、返回值列表：参数列表和返回值列表中的参数变量名可以省略。
+
+  
+
+  定义一个包含`Write`方法的`Writer`接口
+
+  ```go
+  type Writer interface{
+      Write([]byte) error
+  }
+  ```
+
+接口就是规定了一个**需要实现的方法列表**，在 Go 语言中一个类型只要实现了接口中规定的所有方法，那么我们就称它实现了这个接口。
+
+在电商系统中我们允许用户使用多种支付方式（支付宝支付、微信支付、银联支付等），我们的交易流程中可能不太在乎用户究竟使用什么支付方式，只要它能提供一个实现支付功能的`Pay`方法让调用方调用就可以了。
+
+再比如我们需要在某个程序中添加一个将某些指标数据向外输出的功能，根据不同的需求可能要将数据输出到终端、写入到文件或者通过网络连接发送出去。在这个场景下我们可以不关注最终输出的目的地是什么，只需要它能提供一个`Write`方法让我们把内容写入就可以了。
+
+Go语言中为了解决类似上面的问题引入了接口的概念，接口类型区别于其他具体类型，让我们专注于该类型提供的方法，而不是类型本身。使用接口类型通常能够让我们写出更加通用和灵活的代码。
+
+```go
+type ZhiFuBao struct {
+	// 支付宝
+}
+
+// Pay 支付宝的支付方法
+func (z *ZhiFuBao) Pay(amount int64) {
+  fmt.Printf("使用支付宝付款：%.2f元。\n", float64(amount/100))
+}
+
+// Checkout 结账
+func Checkout(obj *ZhiFuBao) {
+	// 支付100元
+	obj.Pay(100)
+}
+
+func main() {
+	Checkout(&ZhiFuBao{})
+}
+```
+
+随着业务的发展，根据用户需求添加支持微信支付。
+
+```go
+type WeChat struct {
+	// 微信
+}
+
+// Pay 微信的支付方法
+func (w *WeChat) Pay(amount int64) {
+	fmt.Printf("使用微信付款：%.2f元。\n", float64(amount/100))
+}
+```
+
+在实际的交易流程中，我们可以根据用户选择的支付方式来决定最终调用支付宝的Pay方法还是微信支付的Pay方法。
+
+```go
+// Checkout 支付宝结账
+func CheckoutWithZFB(obj *ZhiFuBao) {
+	// 支付100元
+	obj.Pay(100)
+}
+
+// Checkout 微信支付结账
+func CheckoutWithWX(obj *WeChat) {
+	// 支付100元
+	obj.Pay(100)
+}
+```
+
+在这种场景下我们可以将具体的支付方式抽象为一个名为`Payer`的接口类型，即任何实现了`Pay`方法的都可以称为`Payer`类型。
+
+```go
+// Payer 包含支付方法的接口类型
+type Payer interface {
+	Pay(int64)
+}
+```
+
+此时只需要修改下原始的`Checkout`函数，它接收一个`Payer`类型的参数。这样就能够在不修改既有函数调用的基础上，支持新的支付方式。
+
+```go
+// Checkout 结账
+func Checkout(obj Payer) {
+	// 支付100元
+	obj.Pay(100)
+}
+
+func main() {
+	Checkout(&ZhiFuBao{}) // 之前调用支付宝支付
+
+	Checkout(&WeChat{}) // 现在支持使用微信支付
+}
+```
+
+接口类型是Go语言提供的一种工具，在实际的编码过程中是否使用它由你自己决定，但是通常使用接口类型可以使代码更清晰易读。
+
+使用值接收者实现接口之后，不管是结构体类型还是对应的结构体指针类型的变量都可以赋值给该接口变量,例：
+
+```go
+// Dog 狗结构体类型
+type Dog struct{}
+
+// Move 使用值接收者定义Move方法实现Mover接口
+func (d Dog) Move() {
+	fmt.Println("狗会动")
+}
+
+var x Mover    // 声明一个Mover类型的变量x
+
+var d1 = Dog{} // d1是Dog类型
+x = d1         // 可以将d1赋值给变量x
+x.Move()
+
+var d2 = &Dog{} // d2是Dog指针类型
+x = d2          // 也可以将d2赋值给变量x
+x.Move()
+```
+
+由于Go语言中有对指针求值的语法糖，对于值接收者实现的接口，无论使用值类型还是指针类型都没有问题。但是我们并不总是能对一个值求址，所以对于指针接收者实现的接口要额外注意。
+
+一个接口可以被多个结构体实现，同样一个结构体也可以实现多个接口。
+
+一个接口的所有方法，不一定需要由一个类型完全实现，接口的方法可以通过在类型中嵌入其他类型或者结构体来实现。
+
+```go
+// WashingMachine 洗衣机
+type WashingMachine interface {
+	wash()
+	dry()
+}
+
+// 甩干器
+type dryer struct{}
+
+// 实现WashingMachine接口的dry()方法
+func (d dryer) dry() {
+	fmt.Println("甩一甩")
+}
+
+// 海尔洗衣机
+type haier struct {
+	dryer //嵌入甩干器
+}
+
+// 实现WashingMachine接口的wash()方法
+func (h haier) wash() {
+	fmt.Println("洗刷刷")
+}
+```
+
+接口与接口之间可以通过互相嵌套形成新的接口类型，例如Go标准库`io`源码中就有很多接口之间互相组合的示例。
+
+接口也可以作为结构体的一个字段
+
+### 空接口
+
+空接口是指没有定义任何方法的接口类型。因此任何类型都可以视为实现了空接口。也正是因为空接口类型的这个特性，空接口类型的变量可以存储任意类型的值。
+
+```go
+package main
+
+import "fmt"
+
+// 空接口
+
+// Any 不包含任何方法的空接口类型
+type Any interface{}
+
+// Dog 狗结构体
+type Dog struct{}
+
+func main() {
+	var x Any
+
+	x = "你好" // 字符串型
+	fmt.Printf("type:%T value:%v\n", x, x)
+	x = 100 // int型
+	fmt.Printf("type:%T value:%v\n", x, x)
+	x = true // 布尔型
+	fmt.Printf("type:%T value:%v\n", x, x)
+	x = Dog{} // 结构体类型
+	fmt.Printf("type:%T value:%v\n", x, x)
+}
+```
+
+```go
+var x interface{}  // 声明一个空接口类型变量x
+```
+
+```go
+// 空接口作为函数参数
+func show(a interface{}) {
+	fmt.Printf("type:%T value:%v\n", a, a)
+}
+```
+
+```go
+// 空接口作为map值
+	var studentInfo = make(map[string]interface{})
+	studentInfo["name"] = "沙河娜扎"
+	studentInfo["age"] = 18
+	studentInfo["married"] = false
+	fmt.Println(studentInfo)
+```
+
+而想要从接口值中获取到对应的实际值需要使用类型断言，其语法格式如下:
+
+```go
+x.(T)
+```
+
+- x：表示接口类型的变量
+- T：表示断言`x`可能是的类型。
+
+```go
+var n Mover = &Dog{Name: "旺财"}
+v, ok := n.(*Dog)
+if ok {
+	fmt.Println("类型断言成功")
+	v.Name = "富贵" // 变量v是*Dog类型
+} else {
+	fmt.Println("类型断言失败")
+}
+```
+
+验证某一结构体是否满足特定的接口类型
+
+```go
+// 摘自gin框架routergroup.go
+type IRouter interface{ ... }
+
+type RouterGroup struct { ... }
+
+var _ IRouter = &RouterGroup{}  // 确保RouterGroup实现了接口IRouter
+```
+
+上面的代码中也可以使用`var _ IRouter = (*RouterGroup)(nil)`进行验证。
+
+
+
+### 反射
+
+反射是指在程序运行期对程序本身进行访问和修改的能力。
+
+通过反射获取值：
+
+```go
+func reflectValue(x interface{}) {
+	v := reflect.ValueOf(x)
+	k := v.Kind()
+	switch k {
+	case reflect.Int64:
+		// v.Int()从反射中获取整型的原始值，然后通过int64()强制类型转换
+		fmt.Printf("type is int64, value is %d\n", int64(v.Int()))
+	case reflect.Float32:
+		// v.Float()从反射中获取浮点型的原始值，然后通过float32()强制类型转换
+		fmt.Printf("type is float32, value is %f\n", float32(v.Float()))
+	case reflect.Float64:
+		// v.Float()从反射中获取浮点型的原始值，然后通过float64()强制类型转换
+		fmt.Printf("type is float64, value is %f\n", float64(v.Float()))
+	}
+}
+func main() {
+	var a float32 = 3.14
+	var b int64 = 100
+	reflectValue(a) // type is float32, value is 3.140000
+	reflectValue(b) // type is int64, value is 100
+	// 将int类型的原始值转换为reflect.Value类型
+	c := reflect.ValueOf(10)
+	fmt.Printf("type c :%T\n", c) // type c :reflect.Value
+}
+```
+
+反射是一个强大并富有表现力的工具，能让我们写出更灵活的代码。但是反射不应该被滥用，原因有以下三个。
+
+1. 基于反射的代码是极其脆弱的，反射中的类型错误会在真正运行的时候才会引发panic，那很可能是在代码写完的很长时间之后。
+2. 大量使用反射的代码通常难以理解。
+3. 反射的性能低下，基于反射实现的代码通常比正常代码运行速度慢一到两个数量级。
