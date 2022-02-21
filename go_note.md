@@ -363,7 +363,12 @@ s2 := []int{}        //len(s2)=0;cap(s2)=0;s2!=nil
 s3 := make([]int, 0) //len(s3)=0;cap(s3)=0;s3!=nil
 ```
 
-
+```go
+//如果需要比较切片是否相等，可以用反射
+if !reflect.DeepEqual(want, got) { // 因为slice不能比较直接，借助反射包中的方法比较
+		t.Errorf("expected:%v, got:%v", want, got) // 测试失败输出错误提示
+}
+```
 
 切片拷贝前后两个变量共享底层数组
 
