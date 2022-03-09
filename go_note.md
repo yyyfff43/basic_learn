@@ -365,7 +365,7 @@ s3 := make([]int, 0) //len(s3)=0;cap(s3)=0;s3!=nil
 
 ```go
 //如果需要比较切片是否相等，可以用反射
-if !reflect.DeepEqual(want, got) { // 因为slice不能比较直接，借助反射包中的方法比较
+if !reflect.DeepEqual(want, got) { // 因为slice不能比较直接，可以借助反射包中的方法比较，但是此方法没有两切片循环遍历比较每一个元素效率高
 		t.Errorf("expected:%v, got:%v", want, got) // 测试失败输出错误提示
 }
 ```
